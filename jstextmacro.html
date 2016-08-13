@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html style="width: 100%; height: 100%; overflow-x: hidden; overflow-y: hidden">
+<body style="width: 100%; height: 100%">
+
+<div style="height: 100%; width: 100%">
+
+<div style="width: 50%; height: 100%; float: left; box-sizing: border-box">
+
+<div style="width: 100%; height: 50%; float: top; padding: 5px; box-sizing: border-box">
+
+<textarea id="codetext" style="font-size: 15px; height: 100%; width: 100%">
+return [['foo','bar','baz']]
+</textarea>
+</div>
+
+<div style="width: 100%; height: 50%; float: top; padding: 5px; box-sizing: border-box">
+<textarea id="templatetext" style="font-size: 15px; height: 100%; width: 100%">
+cout << "$0:" << $0_func << endl;
+</textarea>
+</div>
+
+</div>
+
+
+<div style="width: 50%; height: 100%; float: left; padding: 5px; box-sizing: border-box">
+
+
+<div style="width: 100%; height: 10%; float: top; padding: 5px; box-sizing: border-box">
+<textarea id="stats" style="font-size: 15px; height: 100%; width: 100%">
+</textarea>
+</div>
+
+<div style="width: 100%; height: 90%; float: top; padding: 5px; box-sizing: border-box">
+<textarea id="outtext" style="font-size: 15px; height: 100%; width: 100%">
+</textarea>
+</div>
+</div>
+
+</div>
+
+</body>
+
+<script>
+function getTemplate() {
+    return document.getElementById("templatetext").value;
+}
+
+function getCode() {
+    return document.getElementById("codetext").value;
+}
+
+function validateTokens(tokens) {
+    if(!Array.isArray(tokens)) return false;
+    
+    for (var i=0; i < tokens.length; i++) {
+        if(!Array.isArray(tokens[i])) return false;
+        
+        for(var j=0; j < tokens[i].length; j++) {
+            if(!typeof(tokens[i][j] != 'String')) return false;
+        }
+    }
+    
+    return true;
+}
+
+var inputtouched = true;
+
+document.getElementById("templatetext").addEventListener("click", function() { inputtouched = true; });
+document.getElementById("codetext").addEventListener("click", function() { inputtouched = true; });
+
+document.getElementById("outtext").addEventListener("click", function() {
+        if(!inputtouched) return;
+        
+        document.getElementById("stats").value = "";
+        document.getElementById("outtext").value = "";
+        
+        try {
+            var tokengen = new Function(getCode());
+            var tokens = tokengen();
+            if(!validateTokens(tokens)) throw {name: "Bad token generation", message: "Bad validation"}
+            
+            var replacementtext = ["$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9"];
+                        
+            var outstr = "";
+            
+            function escapetext(s) {
+                return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            }
+            
+            for(var i=0; i<tokens.length; i++) {
+                var str = getTemplate();
+                for(var j=0; j<10; j++) {
+                    
+                    var regexp = new RegExp(escapetext(replacementtext[j]), "g");
+                    if(tokens[i].length > j) {
+                        str = str.replace(regexp, tokens[i][j]);
+                    }
+                    else str = str.replace(replacementtext[j], "");
+                }
+                
+                outstr += str;
+                outstr += "\n";
+            }
+            
+            document.getElementById("outtext").value = outstr;
+            document.getElementById("stats").value = "Tokens: " + tokens.length;
+            
+                
+        } catch(e) {
+            document.getElementById("outtext").value = e.name + "\n" + e.message;
+        }
+        inputtouched = false;
+    }
+);
+
+</script>
+</html>
